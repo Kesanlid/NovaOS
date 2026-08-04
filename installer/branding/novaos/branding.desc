@@ -1,0 +1,56 @@
+# NovaOS Branding Configuration for Calamares
+
+ProductName: NovaOS
+ProductNameShort: NovaOS
+ProductVersion: 1.0.0
+QMLSearchPath: /etc/calamares/qml
+QMLPath: /etc/calamares/qml
+
+BootloaderEntryName: NovaOS
+WallpaperPlugin: solid
+WallpaperSrcRelative: /usr/share/novaos/wallpapers/default.png
+WallpaperSrc: /usr/share/novaos/wallpapers/default.png
+WallpaperOptions: stretched
+
+SidebarBackground: #0a0a14
+SidebarText: #ffffff
+SidebarTextSelected: #e94560
+SidebarTextSecondary: #aaaaaa
+
+AccentColor: #e94560
+ThemeColor: #e94560
+
+# Window branding
+WindowTitle: NovaOS Installer
+WindowIcon: novaos-icon
+WindowWidth: 800
+WindowHeight: 600
+
+# Progress colors
+ProgressFill: #e94560
+ProgressBackground: #1a1a2e
+ProgressText: #ffffff
+
+# Button colors
+ButtonBackground: #e94560
+ButtonText: #ffffff
+ButtonHover: #ff6b8a
+ButtonPressed: #c73e54
+
+# Welcome screen
+WelcomeStyle: sidebar-left
+WelcomeLogo: /usr/share/novaos/icons/logo.svg
+WelcomeHeading: <h2>Welcome to NovaOS</h2>
+WelcomeSubHeading: Gaming-Focused Linux
+WelcomeExpander: false
+
+# License page
+LicenseWidget: true
+
+# Notes
+AboutPageURL: https://novaos.org
+AboutPageText: NovaOS Gaming Edition
+SupportURL: https://novaos.org/support
+KnownIssuesURL: https://novaos.org/issues
+ReleaseNotesURL: https://novaos.org/releases
+DonateURL: https://novaos.org/donate

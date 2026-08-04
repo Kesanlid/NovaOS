@@ -1,0 +1,51 @@
+# NovaOS NVIDIA Graphics Driver
+# Support for NVIDIA GPUs (Proprietary and Open Source)
+
+## NVIDIA Driver (Proprietary)
+nvidia
+nvidia-utils
+nvidia-settings
+nvidia-smi
+
+## NVIDIA 32-bit Libraries (for Steam)
+lib32-nvidia-utils
+lib32-nvidia-cuda-toolkit
+
+## Vulkan Support
+nvidia-utils  # Already includes Vulkan ICD
+vulkan-headers
+vulkan-icd-loader
+lib32-vulkan-icd-loader
+
+## VDPAU (Video Decode)
+vulkan-video
+vdpau-video
+
+## VA-API (Video Acceleration) via NVDEC
+libva-nvidia-driver-git (AUR)
+
+## CUDA Toolkit
+cuda
+nvidia-cuda-toolkit
+opencl-nvidia
+lib32-opencl-nvidia
+
+## Wayland Support
+nvidia-utils  # Wayland support via EGLStream
+
+## X11
+xorg-server
+xorg-xwayland
+
+## NVIDIA Specific
+nvidia-dkms
+nvidia-prime  # For Optimus laptops
+nvtop  # GPU monitoring
+
+## TKG/Liquorix Kernel Support
+# linux-tkg (AUR) - Custom kernel with better gaming performance
+
+## Optional: Nouveau (Open Source - slower performance)
+# xf86-video-nouveau
+# mesa
+# lib32-mesa

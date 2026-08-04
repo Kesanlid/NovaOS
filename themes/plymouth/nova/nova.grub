@@ -1,0 +1,7 @@
+# NovaOS GRUB Background for Plymouth
+# This file defines the GRUB background to use with Plymouth
+# Inherit the NovaOS wallpaper
+
+background="nova-wallpaper.png"
+color_normal="light-gray/black"
+color_highlight="white/cyan"

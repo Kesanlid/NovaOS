@@ -1,0 +1,52 @@
+# NovaOS Wine & Windows Compatibility
+# Wine, Proton alternatives, and Windows software support
+
+## Wine
+wine
+wine-mono
+wine_gecko
+# Bottles (AUR) - Wine manager
+# bottles (AUR)
+
+## Wine Dependencies
+giflib
+libjpeg-turbo
+libldap
+mpg123
+openal
+vulkan-icd-loader
+libpulse
+alsa-lib
+alsa-firmware
+cups
+fontconfig
+libxcomposite
+libxinerama
+opencl-icd-loader
+
+## Winetricks
+winetricks
+
+## Windows Runtime
+vcrun2015
+vcrun2017
+vcrun2019
+vcrun2022
+# dotnet48 (AUR)
+# dotnet6 (AUR)
+
+## Wine Extensions
+# dxvk (AUR) - Vulkan-based implementation
+# dxvk-nvapi (AUR) - NVIDIA specific DXVK
+# vkd3d (AUR) - Direct3D 12 to Vulkan
+
+## DOSBox (Retro Gaming)
+dosbox
+dosbox-staging
+
+## ScummVM (Adventure Games)
+scummvm
+
+## Additional Windows Tools
+# Setup Wine prefixes
+# Install common Windows runtime

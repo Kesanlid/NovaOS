@@ -1,0 +1,10 @@
+[Trigger]
+Type = Package
+Operation = Install
+Operation = Upgrade
+Target = plasmaorkspace
+
+[Action]
+Description = Applying NovaOS KDE configuration...
+When = PostTransaction
+Exec = /usr/bin/notify-send "NovaOS" "Plasma workspace updated. Log out and back in to see changes."

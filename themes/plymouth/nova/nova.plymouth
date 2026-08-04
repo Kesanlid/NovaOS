@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=NovaOS
+Description=NovaOS Gaming Boot Theme
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/nova
+ScriptFile=/usr/share/plymouth/themes/nova/nova.script

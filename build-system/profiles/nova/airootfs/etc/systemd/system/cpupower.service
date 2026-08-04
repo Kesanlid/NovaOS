@@ -1,0 +1,13 @@
+[Unit]
+Description=CPU Power Management
+After=multi-user.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/cpupower frequency-set -g performance
+ExecStart=/usr/bin/cpupower frequency-set -d 2000MHz
+ExecStart=/usr/bin/cpupower set -b 0
+
+[Install]
+WantedBy=multi-user.target

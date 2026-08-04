@@ -1,0 +1,60 @@
+# NovaOS Environment Variables
+# Gaming optimizations and system configuration
+
+# ====================
+# Gaming Settings
+# ====================
+
+# GameMode
+GAMEMODERUN=1
+
+# MangoHud
+MANGOHUD=0
+MANGOHUD_DLSYM=1
+
+# Vulkan settings
+RADV_PERFTEST=gpl
+AMD_VULKAN_ICD=RADV
+
+# NVIDIA settings
+__GL_THREAD_OPTIMIZATION=1
+__GL_SHADER_DISK_CACHE=1
+__GL_YIELD="NOTHING"
+
+# Wine settings
+WINEESYNC=1
+WINEFSYNC=1
+PROTON_USE_WINED3D=0
+PROTON_NO_ESYNC=0
+
+# ====================
+# Display Settings
+# ====================
+
+# X11
+XDG_SESSION_TYPE=x11
+XDG_CURRENT_DESKTOP=KDE
+XDG_SESSION_DESKTOP=KDE
+
+# Wayland (if using Wayland session)
+# XDG_SESSION_TYPE=wayland
+# XDG_CURRENT_DESKTOP=KDE
+# XDG_SESSION_DESKTOP=KDE
+
+# ====================
+# Performance
+# ====================
+
+# CPU governor
+CPUFREQ_GOVERNOR=performance
+
+# System limits
+PROCESS良_MAX=65536
+NO_AT_BRIDGE=1
+
+# ====================
+# Path
+# ====================
+
+# Add local bin to path
+export PATH="$HOME/.local/bin:$PATH"

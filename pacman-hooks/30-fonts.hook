@@ -1,0 +1,10 @@
+[Trigger]
+Type = Package
+Operation = Install
+Operation = Upgrade
+Target = fontconfig
+
+[Action]
+Description = Rebuilding font cache...
+When = PostTransaction
+Exec = /usr/bin/fc-cache -f

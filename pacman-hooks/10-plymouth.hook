@@ -1,0 +1,10 @@
+[Trigger]
+Type = Package
+Operation = Install
+Operation = Upgrade
+Target = plymouth
+
+[Action]
+Description = Rebuilding Plymouth initramfs...
+When = PostTransaction
+Exec = /usr/bin/mkinitcpio -P

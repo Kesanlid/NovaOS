@@ -1,0 +1,140 @@
+/*
+ * NovaOS Plymouth Theme Script
+ * Gaming-focused boot animation
+ */
+
+screen_width = 1920;
+screen_height = 1080;
+
+# NovaOS Color Palette
+nova_purple = [0.12, 0.08, 0.24];
+nova_pink = [0.91, 0.27, 0.38];
+nova_cyan = [0.0, 0.85, 0.85];
+nova_blue = [0.06, 0.2, 0.5];
+
+# Animation state
+progress = 0;
+spinner_angle = 0;
+
+# Initialize
+fun anim_callback () {
+    # Increment progress
+    if (progress < 1) {
+        progress += 0.005;
+    }
+    
+    # Rotate spinner
+    spinner_angle += 2;
+    
+    # Request redraw
+    anim_callback();
+}
+
+# Called at start
+fun dialog_setup () {
+    # Background gradient
+    screen_width = Window.GetWidth();
+    screen_height = Window.GetHeight();
+    
+    # Start animation
+    anim_callback();
+}
+
+# Draw background
+fun draw_background () {
+    # Create gradient background
+    for (y = 0; y < screen_height; y++) {
+        ratio = y / screen_height;
+        r = nova_purple[0] + (nova_blue[0] - nova_purple[0]) * ratio;
+        g = nova_purple[1] + (nova_blue[1] - nova_purple[1]) * ratio;
+        b = nova_purple[2] + (nova_blue[2] - nova_purple[2]) * ratio;
+        Rectangle(0, y, screen_width, 1, r, g, b, 1);
+    }
+}
+
+# Draw NovaOS logo
+fun draw_logo () {
+    # Logo position (centered)
+    logo_x = screen_width / 2;
+    logo_y = screen_height / 2 - 50;
+    
+    # Draw "NOVA" text effect using circles
+    # This creates a stylized glow effect
+    
+    # Outer glow
+    for (i = 0; i < 20; i++) {
+        alpha = 0.05 - (i * 0.002);
+        size = 100 + (i * 5);
+        Circle(logo_x, logo_y, size, nova_purple[0], nova_purple[1], nova_purple[2], alpha);
+    }
+    
+    # Inner glow
+    for (i = 0; i < 10; i++) {
+        alpha = 0.1 - (i * 0.008);
+        size = 80 - (i * 4);
+        Circle(logo_x, logo_y, size, nova_pink[0], nova_pink[1], nova_pink[2], alpha);
+    }
+}
+
+# Draw spinner
+fun draw_spinner () {
+    spinner_x = screen_width / 2;
+    spinner_y = screen_height / 2 + 80;
+    spinner_radius = 30;
+    
+    # Draw rotating dots
+    for (i = 0; i < 8; i++) {
+        angle = (spinner_angle + (i * 45)) * 3.14159 / 180;
+        dot_x = spinner_x + (spinner_radius * Math.Cos(angle));
+        dot_y = spinner_y + (spinner_radius * Math.Sin(angle));
+        
+        # Fade based on position
+        alpha = 0.3 + (Math.Sin(angle) * 0.5);
+        size = 4 + (i % 3);
+        
+        Circle(dot_x, dot_y, size, nova_cyan[0], nova_cyan[1], nova_cyan[2], alpha);
+    }
+    
+    # Center dot
+    Circle(spinner_x, spinner_y, 6, nova_pink[0], nova_pink[1], nova_pink[2], 1);
+}
+
+# Draw progress bar
+fun draw_progress () {
+    bar_width = 400;
+    bar_height = 4;
+    bar_x = (screen_width - bar_width) / 2;
+    bar_y = screen_height - 150;
+    
+    # Background bar
+    Rectangle(bar_x, bar_y, bar_width, bar_height, 0.2, 0.2, 0.3, 0.5);
+    
+    # Progress bar
+    progress_width = bar_width * progress;
+    if (progress_width > 0) {
+        Rectangle(bar_x, bar_y, progress_width, bar_height, nova_pink[0], nova_pink[1], nova_pink[2], 1);
+    }
+}
+
+# Draw text
+fun draw_text () {
+    # Version text at bottom
+    text = "NovaOS Gaming Edition";
+    text_x = screen_width / 2;
+    text_y = screen_height - 100;
+    
+    # Text shadow/glow effect would be handled by theme
+}
+
+# Main render function
+fun dialog_callback () {
+    # Draw layers
+    draw_background();
+    draw_logo();
+    draw_spinner();
+    draw_progress();
+}
+
+# Entry point
+dialog_setup();
+dialog_callback();

@@ -1,0 +1,80 @@
+[General]
+Description=NovaOS
+Opacity=0.95
+ColorRandom=false
+
+[Background]
+Color=26,26,46
+
+[BackgroundIntense]
+Color=40,40,70
+
+[Foreground]
+Color=255,255,255
+
+[ForegroundIntense]
+Color=255,255,255
+
+[Color0]
+Color=26,26,46
+Name=Black
+
+[Color1]
+Color=233,69,96
+Name=Red (Nova Pink)
+
+[Color2]
+Color=107,255,107
+Name=Green
+
+[Color3]
+Color=255,217,61
+Name=Yellow
+
+[Color4]
+Color=0,212,255
+Name=Blue (Nova Cyan)
+
+[Color5]
+Color=170,136,255
+Name=Magenta
+
+[Color6]
+Color=0,212,255
+Name=Cyan
+
+[Color7]
+Color=255,255,255
+Name=White
+
+[Color8]
+Color=100,100,120
+Name=Bright Black
+
+[Color9]
+Color=255,107,138
+Name=Bright Red
+
+[Color10]
+Color=150,255,150
+Name=Bright Green
+
+[Color11]
+Color=255,230,130
+Name=Bright Yellow
+
+[Color12]
+Color=100,220,255
+Name=Bright Blue
+
+[Color13]
+Color=200,180,255
+Name=Bright Magenta
+
+[Color14]
+Color=100,220,255
+Name=Bright Cyan
+
+[Color15]
+Color=255,255,255
+Name=Bright White

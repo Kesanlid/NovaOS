@@ -1,0 +1,130 @@
+# NovaOS Core Packages
+# Base system packages required for a functional OS
+
+## Boot & Init
+systemd
+systemd-sysvcompat
+mkinitcpio
+mkinitcpio-archiso
+linux
+linux-firmware
+linux-headers
+
+## Core Utilities
+base
+base-devel
+archlinux-keyring
+btrfs-progs
+openssh
+sudo
+vim
+wget
+curl
+rsync
+tar
+gzip
+xz
+zstd
+zip
+unzip
+
+## System
+dbus
+dbus-x11
+polkit
+elogind
+haveged
+iwd
+networkmanager
+networkmanager-openvpn
+openssh
+rsync
+
+## User Environment
+bash
+zsh
+fish
+shadowsocks-windows
+tmux
+screen
+htop
+btop
+neofetch
+
+## Compression & Archive
+p7zip
+unrar
+tar
+gzip
+bzip2
+xz
+zstd
+zip
+unzip
+
+## Networking
+iputils
+iproute2
+net-tools
+dnsutils
+traceroute
+ping
+nmap
+telnet
+
+## Filesystem
+fuse2
+fuse3
+exfatprogs
+ntfs-3g
+dosfstools
+mtools
+parted
+gparted
+
+## Hardware Support
+acpi
+acpid
+cpupower
+thermald
+tlp
+xorg-xinput
+xorg-xkill
+xorg-xprop
+xorg-xrandr
+xorg-xset
+xorg-xwd
+libva-utils
+
+## Fonts
+adobe-source-code-pro-fonts
+adobe-source-sans-fonts
+adobe-source-serif-fonts
+ttf-bitstream-vera
+ttf-dejavu
+ttf-droid
+ttf-fira-code
+ttf-fira-mono
+ttf-font-awesome
+ttf-jetbrains-mono
+ttf-lato
+ttf-liberation
+ttf-linux-libertine
+ttf-opensans
+ttf-roboto
+ttf-ubuntu-font-family
+noto-fonts
+noto-fonts-cjk
+noto-fonts-emoji
+ terminus-font
+ terminus-font-ttf
+
+## Internationalization
+glibc
+locales
+man-pages
+man-db
+
+## Documentation
+man-pages
+texinfo
