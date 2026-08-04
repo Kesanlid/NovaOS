@@ -2,7 +2,7 @@ name: Build NovaOS ISO
 
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, feature/**]
   pull_request:
     branches: [main, master]
   workflow_dispatch:
@@ -11,16 +11,12 @@ on:
         description: 'Build profile'
         required: false
         default: 'nova'
-      mirror:
-        description: 'Package mirror URL'
-        required: false
-        default: ''
 
 jobs:
   build:
     runs-on: ubuntu-latest
     container: archlinux:latest
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -29,41 +25,49 @@ jobs:
 
       - name: Install build dependencies
         run: |
-          pacman -Sy --noconfirm archiso mkinitcpio-archiso
+          pacman -Sy --noconfirm archiso
 
       - name: Build ISO
+        env:
+          PROFILE: ${{ github.event.inputs.profile || 'nova' }}
         run: |
-          ./build-system/build.sh --profile ${{ github.event.inputs.profile || 'nova' }} --mirror '${{ github.event.inputs.mirror || '' }}'
+          chmod +x ./build-system/build.sh
+          ./build-system/build.sh --profile $PROFILE
+
+      - name: List output files
+        run: |
+          echo "=== Build Output ==="
+          ls -lh build-system/out/ 2>/dev/null || echo "No output"
+          echo "=== Work Directory ==="
+          ls -la build-system/work/ 2>/dev/null || echo "No work dir"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NovaOS-ISO
-          path: build-system/out/*.iso
-          retention-days: 7
-
-      - name: Upload SHA256
-        uses: actions/upload-artifact@v4
-        with:
-          name: NovaOS-SHA256
-          path: build-system/out/*.sha256
-          retention-days: 7
+          name: NovaOS-ISO-${{ github.run_id }}
+          path: |
+            build-system/out/*.iso
+            build-system/out/*.sha256
+          retention-days: 14
+          if-no-files-found: error
 
   release:
     needs: build
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
-    
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/main')
+
     steps:
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          name: NovaOS-ISO
+          pattern: NovaOS-ISO-*
+          merge-multiple: true
 
-      - name: Create Release
+      - name: Upload to Release
         uses: softprops/action-gh-release@v1
         with:
           files: "*.iso"
           generate_release_notes: true
+          name: NovaOS Release ${{ github.run_number }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
