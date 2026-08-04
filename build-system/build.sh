@@ -112,7 +112,7 @@ fi
 
 # Check for required tools
 check_dependencies() {
-    local deps=(mkarchiso pacstrap mkinitcpio)
+    local deps=(mkarchiso pacstrap)
     for dep in "${deps[@]}"; do
         if ! command -v "$dep" &>/dev/null; then
             error "Missing dependency: $dep"
@@ -120,6 +120,11 @@ check_dependencies() {
             exit 1
         fi
     done
+    # Install mkinitcpio if missing (needed for initramfs)
+    if ! command -v mkinitcpio &>/dev/null; then
+        info "Installing mkinitcpio..."
+        pacman -S --noconfirm mkinitcpio
+    fi
 }
 
 # Clean build directory
