@@ -6,16 +6,13 @@ on:
   pull_request:
     branches: [main, master]
   workflow_dispatch:
-    inputs:
-      profile:
-        description: 'Build profile'
-        required: false
-        default: 'nova'
 
 jobs:
   build:
     runs-on: ubuntu-latest
     container: archlinux:latest
+    # Privileged mode is required for chroot/mount operations
+    options: --privileged
 
     steps:
       - name: Checkout
@@ -25,21 +22,16 @@ jobs:
 
       - name: Install build dependencies
         run: |
-          pacman -Sy --noconfirm archiso
+          pacman -Sy --noconfirm archiso git
 
       - name: Build ISO
         env:
-          PROFILE: ${{ github.event.inputs.profile || 'nova' }}
+          PROFILE: nova
         run: |
+          # Create build directories
+          mkdir -p build-system/work build-system/out
           chmod +x ./build-system/build.sh
           ./build-system/build.sh --profile $PROFILE
-
-      - name: List output files
-        run: |
-          echo "=== Build Output ==="
-          ls -lh build-system/out/ 2>/dev/null || echo "No output"
-          echo "=== Work Directory ==="
-          ls -la build-system/work/ 2>/dev/null || echo "No work dir"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -68,6 +60,6 @@ jobs:
         with:
           files: "*.iso"
           generate_release_notes: true
-          name: NovaOS Release ${{ github.run_number }}
+          name: NovaOS ${{ github.run_number }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
