@@ -9,6 +9,7 @@ mkinitcpio-archiso
 linux
 linux-firmware
 linux-headers
+syslinux
 
 ## Core Utilities
 base
