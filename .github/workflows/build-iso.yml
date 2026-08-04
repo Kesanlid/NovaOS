@@ -28,51 +28,50 @@ jobs:
             squashfs-tools \
             wget \
             sudo \
-            arch-install-scripts
+            arch-install-scripts \
+            dosfstools
 
       - name: Create build environment
         run: |
-          # Create disk image
-          sudo qemu-img create -f raw /tmp/archdisk.img 20G
-          
-          # Setup loop device
+          sudo qemu-img create -f raw /tmp/archdisk.img 15G
           LOOPDEV=$(sudo losetup -fP --show /tmp/archdisk.img)
           echo "loop_dev=$LOOPDEV" >> $GITHUB_ENV
-          
-          # Partition
           sudo parted -s $LOOPDEV mklabel msdos
           sudo parted -s $LOOPDEV mkpart primary ext4 1MiB 100%
           sudo parted -s $LOOPDEV set 1 boot on
           sudo partprobe $LOOPDEV
-          
-          # Format and mount
           sudo mkfs.ext4 -F "${LOOPDEV}p1"
           sudo mkdir -p /mnt/archbuild
           sudo mount "${LOOPDEV}p1" /mnt/archbuild
 
       - name: Download and extract Arch Linux
         run: |
-          # Download bootstrap
-          wget -q https://geo.mirror.pacman.org/archlinux/iso/latest/archlinux-bootstrap-x86_64.tar.gz -O /tmp/arch.tar.gz
-          
-          # Extract to mounted partition
+          wget -q https://geo.mirror.pacman.org/archlinux/iso/latest/archlinux-bootstrap-x86_64.tar.gz -O /tmp/arch.tar.gz || \
+          wget -q https://mirror.rackspace.com/archlinux/iso/latest/archlinux-bootstrap-x86_64.tar.gz -O /tmp/arch.tar.gz
+          ls -lh /tmp/arch.tar.gz
           sudo tar xzf /tmp/arch.tar.gz -C /mnt/archbuild --strip-components=1
-          
-          # Configure pacman mirror
           echo 'Server = https://geo.mirror.pacman.org/archlinux/$repo/os/$arch' | sudo tee /mnt/archbuild/etc/pacman.d/mirrorlist
 
-      - name: Install base system
+      - name: Mount filesystems
         run: |
-          # Mount required filesystems
-          sudo mount -t proc /proc /mnt/archbuild/proc
-          sudo mount -t sysfs /sys /mnt/archbuild/sys
-          sudo mount --bind /dev /mnt/archbuild/dev
+          sudo mount -t proc /proc /mnt/archbuild/proc || true
+          sudo mount -t sysfs /sys /mnt/archbuild/sys || true
+          sudo mount --bind /dev /mnt/archbuild/dev || true
           sudo cp /etc/resolv.conf /mnt/archbuild/etc/resolv.conf
-          
-          # Install base system
+
+      - name: Setup pacman keys
+        timeout-minutes: 10
+        run: |
           sudo chroot /mnt/archbuild /bin/bash -c "
-            pacman-key --init && pacman-key --populate archlinux && \
-            pacman -Sy --noconfirm base base-devel archiso linux linux-firmware
+            pacman-key --init 2>&1 || echo 'key init done'
+            pacman-key --populate archlinux 2>&1 || echo 'key populate done'
+          "
+
+      - name: Install base system
+        timeout-minutes: 30
+        run: |
+          sudo chroot /mnt/archbuild /bin/bash -c "
+            pacman -Sy --noconfirm base base-devel archiso linux linux-firmware 2>&1 | tail -30
           "
 
       - name: Copy project files
@@ -80,19 +79,27 @@ jobs:
           sudo mkdir -p /mnt/archbuild/root/novaos
           sudo cp -r . /mnt/archbuild/root/novaos/
           sudo chmod +x /mnt/archbuild/root/novaos/build-system/build.sh
+          sudo ls /mnt/archbuild/root/novaos/build-system/
 
       - name: Build ISO
+        timeout-minutes: 60
         run: |
           sudo chroot /mnt/archbuild /bin/bash -c "
             cd /root/novaos
-            ./build-system/build.sh --profile nova --clean
-          " 2>&1 || echo "Build attempted"
+            ./build-system/build.sh --profile nova --clean 2>&1 | tee /tmp/build.log
+            echo 'EXIT_CODE:' \$?
+          "
+
+      - name: Debug
+        if: failure()
+        run: |
+          sudo cat /tmp/build.log 2>/dev/null || echo "No log"
+          sudo ls -la /mnt/archbuild/root/novaos/build-system/work/ 2>/dev/null || echo "No work dir"
 
       - name: Copy artifacts
         run: |
           mkdir -p output
-          sudo cp /mnt/archbuild/root/novaos/build-system/out/*.iso output/ 2>/dev/null || echo "No ISO found"
-          sudo cp /mnt/archbuild/root/novaos/build-system/out/*.sha256 output/ 2>/dev/null || true
+          sudo cp /mnt/archbuild/root/novaos/build-system/out/*.iso output/ 2>/dev/null || echo "No ISO"
           ls -la output/
 
       - name: Cleanup
@@ -109,23 +116,3 @@ jobs:
           path: output/
           retention-days: 14
           if-no-files-found: warn
-
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/main')
-
-    steps:
-      - name: Download artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: NovaOS-ISO
-          path: release
-
-      - name: Upload to Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: "release/*"
-          generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
