@@ -1,29 +1,31 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2034
 # NovaOS Profile Definition for ArchISO
 
-# Profile name
-_profile_name="NovaOS"
-_version="1.0.0"
-
-# Architecture
-_arch="x86_64"
-
 # ISO settings
-_iso_name="NovaOS"
-_iso_publisher="NovaOS Team"
-_iso_application="NovaOS Live/Installation"
-_iso_volume_id="NovaOS-${_version}"
-_iso_version="${_version}"
+iso_name="NovaOS"
+iso_label="NOVAOS"
+iso_publisher="NovaOS Team <https://novaos.tech>"
+iso_application="NovaOS Live/Installation"
+iso_version="1.0.0"
+install_dir="nova"
 
-# Bootloader
-_bootloader="grub"
+# Build modes
+buildmodes=('iso')
 
-# Installation mode
-_install_mode="normal"
+# Boot modes
+bootmodes=('bios.syslinux' 'uefi.systemd-boot')
 
-# Build directories  
-_work_dir="work"
-_out_dir="out"
+# Pacman configuration
+pacman_conf="pacman.conf"
 
-# Package list - use packages.x86_64 file in profile directory
-_pkg_list="packages.x86_64"
+# Airootfs image settings
+airootfs_image_type="squashfs"
+airootfs_image_tool_options=('-comp' 'xz' '-Xbcj' 'x86,arm64' '-b' '1M' '-Xdict-size' '1M')
+
+# File permissions for live environment
+file_permissions=(
+  ["/etc/shadow"]="0:0:400"
+  ["/root"]="0:0:750"
+  ["/usr/local/bin/nova-installer"]="0:0:755"
+)
