@@ -21,9 +21,9 @@ _bootloader="grub"
 # Installation mode
 _install_mode="normal"
 
-# Build directories
+# Build directories  
 _work_dir="work"
 _out_dir="out"
 
-# Package list (handled by build.sh via packages.x86_64)
-# _pkg_list=""
+# Package list - use packages.x86_64 file in profile directory
+_pkg_list="packages.x86_64"
