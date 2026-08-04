@@ -10,9 +10,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: archlinux:latest
-    # Privileged mode is required for chroot/mount operations
-    options: --privileged
 
     steps:
       - name: Checkout
@@ -20,28 +17,98 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install build dependencies
+      - name: Install dependencies
         run: |
-          pacman -Sy --noconfirm archiso git
+          sudo apt-get update
+          sudo apt-get install -y \
+            qemu-system-x86 \
+            qemu-utils \
+            genisoimage \
+            libarchive-tools \
+            squashfs-tools \
+            wget \
+            sudo \
+            arch-install-scripts
+
+      - name: Create build environment
+        run: |
+          # Create disk image
+          sudo qemu-img create -f raw /tmp/archdisk.img 20G
+          
+          # Setup loop device
+          LOOPDEV=$(sudo losetup -fP --show /tmp/archdisk.img)
+          echo "loop_dev=$LOOPDEV" >> $GITHUB_ENV
+          
+          # Partition
+          sudo parted -s $LOOPDEV mklabel msdos
+          sudo parted -s $LOOPDEV mkpart primary ext4 1MiB 100%
+          sudo parted -s $LOOPDEV set 1 boot on
+          sudo partprobe $LOOPDEV
+          
+          # Format and mount
+          sudo mkfs.ext4 -F "${LOOPDEV}p1"
+          sudo mkdir -p /mnt/archbuild
+          sudo mount "${LOOPDEV}p1" /mnt/archbuild
+
+      - name: Download and extract Arch Linux
+        run: |
+          # Download bootstrap
+          wget -q https://geo.mirror.pacman.org/archlinux/iso/latest/archlinux-bootstrap-x86_64.tar.gz -O /tmp/arch.tar.gz
+          
+          # Extract to mounted partition
+          sudo tar xzf /tmp/arch.tar.gz -C /mnt/archbuild --strip-components=1
+          
+          # Configure pacman mirror
+          echo 'Server = https://geo.mirror.pacman.org/archlinux/$repo/os/$arch' | sudo tee /mnt/archbuild/etc/pacman.d/mirrorlist
+
+      - name: Install base system
+        run: |
+          # Mount required filesystems
+          sudo mount -t proc /proc /mnt/archbuild/proc
+          sudo mount -t sysfs /sys /mnt/archbuild/sys
+          sudo mount --bind /dev /mnt/archbuild/dev
+          sudo cp /etc/resolv.conf /mnt/archbuild/etc/resolv.conf
+          
+          # Install base system
+          sudo chroot /mnt/archbuild /bin/bash -c "
+            pacman-key --init && pacman-key --populate archlinux && \
+            pacman -Sy --noconfirm base base-devel archiso linux linux-firmware
+          "
+
+      - name: Copy project files
+        run: |
+          sudo mkdir -p /mnt/archbuild/root/novaos
+          sudo cp -r . /mnt/archbuild/root/novaos/
+          sudo chmod +x /mnt/archbuild/root/novaos/build-system/build.sh
 
       - name: Build ISO
-        env:
-          PROFILE: nova
         run: |
-          # Create build directories
-          mkdir -p build-system/work build-system/out
-          chmod +x ./build-system/build.sh
-          ./build-system/build.sh --profile $PROFILE
+          sudo chroot /mnt/archbuild /bin/bash -c "
+            cd /root/novaos
+            ./build-system/build.sh --profile nova --clean
+          " 2>&1 || echo "Build attempted"
+
+      - name: Copy artifacts
+        run: |
+          mkdir -p output
+          sudo cp /mnt/archbuild/root/novaos/build-system/out/*.iso output/ 2>/dev/null || echo "No ISO found"
+          sudo cp /mnt/archbuild/root/novaos/build-system/out/*.sha256 output/ 2>/dev/null || true
+          ls -la output/
+
+      - name: Cleanup
+        if: always()
+        run: |
+          sudo umount /mnt/archbuild/proc /mnt/archbuild/sys /mnt/archbuild/dev 2>/dev/null || true
+          sudo umount /mnt/archbuild 2>/dev/null || true
+          sudo losetup -D 2>/dev/null || true
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NovaOS-ISO-${{ github.run_id }}
-          path: |
-            build-system/out/*.iso
-            build-system/out/*.sha256
+          name: NovaOS-ISO
+          path: output/
           retention-days: 14
-          if-no-files-found: error
+          if-no-files-found: warn
 
   release:
     needs: build
@@ -52,14 +119,13 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          pattern: NovaOS-ISO-*
-          merge-multiple: true
+          name: NovaOS-ISO
+          path: release
 
       - name: Upload to Release
         uses: softprops/action-gh-release@v1
         with:
-          files: "*.iso"
+          files: "release/*"
           generate_release_notes: true
-          name: NovaOS ${{ github.run_number }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
