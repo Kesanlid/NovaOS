@@ -235,6 +235,27 @@ collect_packages() {
     local profile_dir="$SCRIPT_DIR/profiles/$PROFILE"
     printf '%s\n' "${all_packages[@]}" > "$profile_dir/packages.x86_64"
     success "Created packages.x86_64 for archiso."
+    
+    # Create pacman.conf for the profile (required by mkarchiso)
+    local pacman_conf="$profile_dir/pacman.conf"
+    cat > "$pacman_conf" << 'PACMAN_EOF'
+[options]
+Architecture = auto
+CacheDir = /var/cache/pacman/pkg/
+CacheDir = /var/cache/pacman/pkg/
+SigLevel = Never
+LocalFileSigLevel = Never
+
+[core]
+Include = /etc/pacman.d/mirrorlist
+
+[extra]
+Include = /etc/pacman.d/mirrorlist
+
+[community]
+Include = /etc/pacman.d/mirrorlist
+PACMAN_EOF
+    success "Created pacman.conf for archiso."
 }
 
 # Build the ISO
