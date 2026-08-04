@@ -23,7 +23,7 @@ export ISO_VOLUME_ID="NovaOS-${ISO_VERSION}"
 export BOOTLOADER="grub"
 
 # Installation
-exportINSTALL_MODE="normal"
+export INSTALL_MODE="normal"
 
 # Build directories
 export WORK_DIR="work"

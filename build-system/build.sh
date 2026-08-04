@@ -230,6 +230,11 @@ collect_packages() {
     # Write combined package list
     printf '%s\n' "${all_packages[@]}" > "$WORK_DIR/packages.list"
     success "Collected ${#all_packages[@]} packages."
+    
+    # Also create packages.x86_64 for archiso in the profile directory
+    local profile_dir="$SCRIPT_DIR/profiles/$PROFILE"
+    printf '%s\n' "${all_packages[@]}" > "$profile_dir/packages.x86_64"
+    success "Created packages.x86_64 for archiso."
 }
 
 # Build the ISO
