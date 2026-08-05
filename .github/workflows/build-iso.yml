@@ -39,15 +39,21 @@ jobs:
             set -e
             pacman-key --init || true
             pacman-key --populate archlinux || true
+            # Update pacman databases
+            pacman -Sy --noconfirm || true
             pacman -Sy --noconfirm archiso git
           " || exit 1
           
           echo "=== Building ISO ==="
           docker exec archbuild bash -c "
             set -e
+            # Clean previous builds
+            rm -rf /root/novaos/build-system/work /root/novaos/build-system/out
+            mkdir -p /root/novaos/build-system/work /root/novaos/build-system/out
+            
             cd /root/novaos
             chmod +x build-system/build.sh
-            ./build-system/build.sh --profile nova --clean
+            ./build-system/build.sh --profile nova
           " || exit 1
 
       - name: Check output
