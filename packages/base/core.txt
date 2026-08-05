@@ -1,5 +1,6 @@
 # NovaOS Additional Packages
 # Only add packages NOT in base Arch
+syslinux
 openssh
 sudo
 wget
