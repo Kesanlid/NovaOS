@@ -1,0 +1,9 @@
+# NovaOS Graphics
+mesa
+vulkan-radeon
+vulkan-intel
+vulkan-icd-loader
+xf86-video-amdgpu
+xf86-video-intel
+libva-mesa-driver
+libva-intel-driver

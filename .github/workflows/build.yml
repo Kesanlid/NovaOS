@@ -1,0 +1,71 @@
+name: Build NovaOS ISO
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Build ISO
+      run: |
+        # Clean up any existing containers
+        docker stop nova-build 2>/dev/null || true
+        docker rm nova-build 2>/dev/null || true
+        
+        # Start fresh Arch container
+        docker run -d --name nova-build --privileged \
+          archlinux:latest /bin/bash -c "sleep infinity"
+        
+        # Setup pacman fresh
+        docker exec nova-build bash -c '
+          rm -rf /var/lib/pacman/*
+          rm -rf /var/cache/pacman/*
+          pacman-key --init
+          pacman-key --populate archlinux
+          pacman -Sy --noconfirm
+          pacman -S --noconfirm archiso git
+        '
+        
+        # Copy project
+        docker cp . nova-build:/build
+        
+        # Clean profile airootfs var
+        docker exec nova-build bash -c '
+          rm -rf /build/profile/airootfs/var/lib/pacman
+          rm -rf /build/profile/airootfs/var/cache
+          mkdir -p /build/profile/airootfs/var/lib
+        '
+        
+        # Run build
+        docker exec nova-build bash -c '
+          cd /build
+          chmod +x build.sh
+          ./build.sh
+        ' || { docker logs nova-build; exit 1; }
+    
+    - name: Copy output
+      run: |
+        mkdir -p output
+        docker cp nova-build:/build/output/. output/ || exit 1
+        ls -lh output/
+    
+    - name: Upload ISO
+      if: success()
+      uses: actions/upload-artifact@v4
+      with:
+        name: NovaOS-ISO
+        path: output/*.iso
+        retention-days: 7
+    
+    - name: Cleanup
+      if: always()
+      run: |
+        docker stop nova-build 2>/dev/null || true
+        docker rm nova-build 2>/dev/null || true

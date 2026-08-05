@@ -1,0 +1,11 @@
+# NovaOS KDE Plasma
+plasma
+plasma-desktop
+konsole
+dolphin
+kate
+ark
+spectacle
+systemsettings
+sddm
+sddm-kcm
