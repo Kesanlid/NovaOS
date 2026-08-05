@@ -1,54 +1,24 @@
 # NovaOS AMD Graphics Driver
-# Support for AMD GPUs (Radeon and newer)
-
-## Mesa - Open Source Driver
 mesa
 lib32-mesa
-
-## Vulkan Support
 vulkan-radeon
 lib32-vulkan-radeon
 vulkan-headers
 vulkan-icd-loader
 lib32-vulkan-icd-loader
-
-## AMDGPU Driver
-amdgpu-pro-lib32 (AUR - optional proprietary)
-amdgpu-pro-installer (AUR - optional proprietary)
-
-## VDPAU (Video Decode)
 mesa-vdpau
 lib32-mesa-vdpau
-
-## VA-API (Video Acceleration)
 libva-mesa-driver
 lib32-libva-mesa-driver
-
-## OpenCL
 opencl-mesa
 lib32-opencl-mesa
 ocl-icd
 lib32-libclc
-
-## DRI (Direct Rendering)
 libdrm
 libtxc_dxtn
 lib32-libtxc_dxtn
-
-## Wayland Display Server
 wayland
 egl-wayland
-
-## X11 (Legacy)
 xf86-video-amdgpu
 xf86-video-ati
-
-## AMD Specific Tools
 radeontop
-radeon-profile-git (AUR)
-amdgpu-top-bin (AUR)
-corectrl (AUR) - GPU overclocking tool
-
-## Optional: ROCm (Compute)
-# rocm-hip-runtime (AUR)
-# rocm-opencl-runtime (AUR)

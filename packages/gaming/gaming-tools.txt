@@ -1,55 +1,25 @@
 # NovaOS Gaming Tools
-# Performance utilities, overlays, and game launchers
-
-## GameMode (Feral Interactive)
 gamemode
 libgamemode
 libgamemode-auto
-
-## MangoHud (FPS Overlay)
 mangohud
 mangohud-libs
-goverlay  # GUI for MangoHud configuration
-
-## Feral GameMode
-gamemode
-# gamemode-indicator (AUR) - System tray indicator
-
-## Game Launchers
+goverlay
 lutris
-# heroic-games-launcher-bin (AUR)
-# heroic-games-launcher (AUR - Git version)
-
-## Gamepad Support
 xboxdrv
 xpadneo-dkms
 sc-controller
 antimicrox
 jstest-gtk
-
-## Input Devices
 evtest
 inputattach
-ffmpeg  # For game streaming/recording
-
-## Recording & Streaming
+ffmpeg
 obs-studio
 kooha
 spectacle
-
-## Controller Support
 steamdeck-kde-presets
 game-devices-udev
-
-## Additional Gaming Tools
-# GameScope (AUR) - Session compositing for games
 gamescope
-# vkBasalt (AUR) - Vulkan post-processing layer
 vkbasalt
-# MangoHud (already listed above)
-# GOverlay (AUR) - MangoHud config GUI
-goverlay
-
-## VR Support
 libvirtd
 virglrenderer

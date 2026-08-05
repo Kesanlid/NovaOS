@@ -1,20 +1,7 @@
-# NovaOS Steam & Proton
-# Steam client and Proton compatibility layer
-
-## Steam Client
+# NovaOS Steam
 steam
 steam-native-runtime
 steamtinkerlaunch
-
-## Proton (via AUR or Steam)
-# proton
-# proton-ge-custom
-# protonup-qt
-
-## Steam Fonts
-# steam-fonts (AUR)
-
-## Steam Dependencies
 lib32-alsa-lib
 lib32-alsa-plugins
 lib32-giflib
