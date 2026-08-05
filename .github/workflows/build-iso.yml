@@ -23,17 +23,18 @@ jobs:
       - name: Run Arch container
         run: |
           docker run -d --name archbuild --privileged archlinux:latest sleep infinity
+          docker exec archbuild mkdir -p /root/novaos
           docker ps
 
       - name: Build ISO
         run: |
           # Copy files to container
-          docker cp . archbuild:/workspace/NovaOS
+          docker cp . archbuild:/root/novaos
           
           # Install archiso and build
           docker exec archbuild bash -c "
             pacman -Sy --noconfirm archiso git 2>&1 | tail -5
-            cd /workspace/NovaOS
+            cd /root/novaos
             chmod +x build-system/build.sh
             ./build-system/build.sh --profile nova --clean 2>&1
           "
@@ -41,7 +42,7 @@ jobs:
       - name: Copy artifacts
         run: |
           mkdir -p output
-          docker cp archbuild:/workspace/NovaOS/build-system/out/. output/ 2>/dev/null || echo "No ISO"
+          docker cp archbuild:/root/novaos/build-system/out/. output/ 2>/dev/null || echo "No ISO"
           ls -la output/
 
       - name: Cleanup
