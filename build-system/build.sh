@@ -245,13 +245,13 @@ SigLevel = Never
 LocalFileSigLevel = Never
 
 [core]
-Server = https://mirror.rackspace.com/archlinux/$repo/os/$arch
+Server = https://geo.mirror.pacman.org/archlinux/$repo/os/$arch
 
 [extra]
-Server = https://mirror.rackspace.com/archlinux/$repo/os/$arch
+Server = https://geo.mirror.pacman.org/archlinux/$repo/os/$arch
 
 [community]
-Server = https://mirror.rackspace.com/archlinux/$repo/os/$arch
+Server = https://geo.mirror.pacman.org/archlinux/$repo/os/$arch
 PACMAN_EOF
     success "Created pacman.conf for archiso."
 }
