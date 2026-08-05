@@ -49,33 +49,52 @@ jobs:
       - name: Download Arch Linux Bootstrap
         run: |
           # Clean any previous download
-          rm -f /tmp/arch.tar.gz
+          rm -f /tmp/arch.tar.gz /tmp/archlinux-bootstrap-x86_64.tar.gz*
           
-          # Download bootstrap using wget with retries
-          wget --timeout=300 --tries=3 --progress=bar:force \
-            "https://geo.mirror.pacman.org/archlinux/iso/latest/archlinux-bootstrap-x86_64.tar.gz" \
-            -O /tmp/arch.tar.gz 2>&1 || {
-            echo "First mirror failed, trying backup..."
-            wget --timeout=300 --tries=3 --progress=bar:force \
-              "https://mirror.rackspace.com/archlinux/iso/latest/archlinux-bootstrap-x86_64.tar.gz" \
-              -O /tmp/arch.tar.gz 2>&1
-          }
+          # Try multiple download methods
+          echo "Attempting download from multiple sources..."
           
-          # Check file
-          ls -lh /tmp/arch.tar.gz
-          file /tmp/arch.tar.gz
-          du -h /tmp/arch.tar.gz
+          # Method 1: Direct wget with different options
+          wget --no-check-certificate --timeout=60 --tries=3 \
+            "https://mirrors.kernel.org/archlinux/iso/latest/archlinux-bootstrap-x86_64.tar.gz" \
+            -O /tmp/arch.tar.gz 2>&1 || true
+          
+          # Check if download succeeded
+          if [ ! -s /tmp/arch.tar.gz ] || [ "$(du /tmp/arch.tar.gz | cut -f1)" -lt 50000 ]; then
+            echo "First attempt failed, trying alternative mirror..."
+            rm -f /tmp/arch.tar.gz
+            wget --no-check-certificate --timeout=60 --tries=3 \
+              "https://ftp.snt.utwente.nl/pub/os/linux/archlinux/iso/latest/archlinux-bootstrap-x86_64.tar.gz" \
+              -O /tmp/arch.tar.gz 2>&1 || true
+          fi
+          
+          # Check file size
+          if [ -s /tmp/arch.tar.gz ]; then
+            SIZE=$(stat -c%s /tmp/arch.tar.gz 2>/dev/null || echo "0")
+            echo "Downloaded file size: $SIZE bytes"
+            if [ "$SIZE" -lt 50000000 ]; then
+              echo "File too small, download may have failed"
+              rm -f /tmp/arch.tar.gz
+            fi
+          else
+            echo "No file downloaded"
+          fi
+          
+          ls -lh /tmp/arch.tar.gz 2>/dev/null || echo "Download failed"
 
       - name: Extract Arch Linux
         run: |
-          # Verify gzip format
-          head -c 2 /tmp/arch.tar.gz | xxd | head -1
+          if [ ! -f /tmp/arch.tar.gz ] || [ ! -s /tmp/arch.tar.gz ]; then
+            echo "ERROR: No valid download found"
+            exit 1
+          fi
           
           # Extract
           sudo tar xzf /tmp/arch.tar.gz -C /mnt/archbuild --strip-components=1
           
-          # Configure mirror
-          echo 'Server = https://geo.mirror.pacman.org/archlinux/$repo/os/$arch' | sudo tee /mnt/archbuild/etc/pacman.d/mirrorlist
+          # Configure pacman
+          sudo rm -f /mnt/archbuild/etc/pacman.d/mirrorlist
+          echo 'Server = https://mirrors.kernel.org/archlinux/$repo/os/$arch' | sudo tee /mnt/archbuild/etc/pacman.d/mirrorlist
           ls -la /mnt/archbuild/
 
       - name: Mount filesystems
