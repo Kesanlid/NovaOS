@@ -19,16 +19,15 @@ jobs:
         docker stop nova-build 2>/dev/null || true
         docker rm nova-build 2>/dev/null || true
         
-        # Start fresh Arch container
+        # Start fresh Arch container with initialized pacman
         docker run -d --name nova-build --privileged \
           archlinux:latest /bin/bash -c "sleep infinity"
         
-        # Setup pacman fresh
+        # ONLY install archiso and git - container has everything else
         docker exec nova-build bash -c '
-          rm -rf /var/lib/pacman/*
-          rm -rf /var/cache/pacman/*
-          pacman-key --init
-          pacman-key --populate archlinux
+          set -e
+          pacman-key --init || true
+          pacman-key --populate archlinux || true
           pacman -Sy --noconfirm
           pacman -S --noconfirm archiso git
         '
@@ -36,15 +35,9 @@ jobs:
         # Copy project
         docker cp . nova-build:/build
         
-        # Clean profile airootfs var
+        # Run build - mkarchiso creates its own filesystem
         docker exec nova-build bash -c '
-          rm -rf /build/profile/airootfs/var/lib/pacman
-          rm -rf /build/profile/airootfs/var/cache
-          mkdir -p /build/profile/airootfs/var/lib
-        '
-        
-        # Run build
-        docker exec nova-build bash -c '
+          set -e
           cd /build
           chmod +x build.sh
           ./build.sh
