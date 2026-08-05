@@ -4,7 +4,6 @@ systemd-sysvcompat
 mkinitcpio
 linux
 linux-firmware
-base
 base-devel
 archlinux-keyring
 btrfs-progs
