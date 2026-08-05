@@ -34,14 +34,13 @@ done
 printf '%s\n' "${PKGS[@]}" | sort -u > "$PROFILE_DIR/packages.x86_64"
 echo "      $(wc -l < "$PROFILE_DIR/packages.x86_64") packages"
 
-# Create pacman.conf with absolute cache path
+# Create pacman.conf
 echo "[2/4] Configuring pacman..."
 cat > "$PROFILE_DIR/pacman.conf" << 'PACCONF'
 [options]
 Architecture = auto
 SigLevel = Never
 LocalFileSigLevel = Never
-CacheDir = /var/cache/pacman/pkg
 
 [core]
 Server = https://geo.mirror.pacman.org/archlinux/$repo/os/$arch
@@ -71,7 +70,6 @@ PROFDEF
 
 # Build
 echo "[4/4] Building ISO..."
-export PACMAN_CACHE_DIR=/var/cache/pacman/pkg
 mkarchiso -v -w "$BUILD_DIR" -o "$OUT_DIR" "$PROFILE_DIR"
 
 echo ""
