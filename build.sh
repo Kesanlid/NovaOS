@@ -34,22 +34,24 @@ done
 printf '%s\n' "${PKGS[@]}" | sort -u > "$PROFILE_DIR/packages.x86_64"
 echo "      $(wc -l < "$PROFILE_DIR/packages.x86_64") packages"
 
-# Create pacman.conf
+# Create pacman.conf with retries
 echo "[2/4] Configuring pacman..."
 cat > "$PROFILE_DIR/pacman.conf" << 'PACCONF'
 [options]
 Architecture = auto
 SigLevel = Never
 LocalFileSigLevel = Never
+Color
+TotalDownload
 
 [core]
-Server = https://geo.mirror.pacman.org/archlinux/$repo/os/$arch
+Server = https://mirror.rackspace.com/archlinux/$repo/os/$arch
 
 [extra]
-Server = https://geo.mirror.pacman.org/archlinux/$repo/os/$arch
+Server = https://mirror.rackspace.com/archlinux/$repo/os/$arch
 
 [community]
-Server = https://geo.mirror.pacman.org/archlinux/$repo/os/$arch
+Server = https://mirror.rackspace.com/archlinux/$repo/os/$arch
 PACCONF
 
 # Create profiledef
