@@ -20,51 +20,56 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Run Arch container
-        run: |
-          echo "=== Starting Docker ==="
-          docker version
-          docker run -d --name archbuild --privileged archlinux:latest sleep infinity
-          docker ps -a
-          docker exec archbuild cat /etc/os-release
-
       - name: Build ISO
-        timeout-minutes: 60
+        timeout-minutes: 90
         run: |
-          echo "=== Copying files ==="
-          docker cp . archbuild:/root/novaos || exit 1
+          mkdir -p /tmp/nova-build/{cache,pacman-db,work,out}
+          docker stop archiso-build 2>/dev/null || true
+          docker rm archiso-build 2>/dev/null || true
           
-          echo "=== Installing packages ==="
-          docker exec archbuild bash -c "
+          docker run -d \
+            --name archiso-build \
+            --privileged \
+            -v /tmp/nova-build/cache:/var/cache/pacman \
+            -v /tmp/nova-build/pacman-db:/var/lib/pacman \
+            archlinux:latest \
+            sleep infinity
+          
+          sleep 3
+          
+          docker exec archiso-build bash -c '
             set -e
-            # Clean pacman cache and databases
-            rm -rf /var/lib/pacman/sync/*
-            rm -rf /var/cache/pacman/pkg/*
-            
-            # Setup fresh pacman
-            pacman-key --init || true
-            pacman-key --populate archlinux || true
+            rm -rf /var/lib/pacman/*
+            rm -rf /var/cache/pacman/*
+            pacman-key --init
+            pacman-key --populate archlinux
             pacman -Sy --noconfirm
-            pacman -Sy --noconfirm archiso git
-          " || exit 1
+            pacman -S --noconfirm archiso git
+          '
           
-          echo "=== Building ISO ==="
-          docker exec archbuild bash -c "
+          docker cp . archiso-build:/build
+          
+          docker exec archiso-build bash -c '
+            rm -rf /build/build-system/profiles/nova/airootfs/var/lib/pacman
+            rm -rf /build/build-system/profiles/nova/airootfs/var/cache
+            mkdir -p /build/build-system/profiles/nova/airootfs/var/lib
+          '
+          
+          docker exec archiso-build bash -c '
             set -e
-            cd /root/novaos
+            cd /build
             chmod +x build-system/build.sh
-            ./build-system/build.sh --profile nova
-          " || exit 1
+            ./build-system/build.sh
+          ' || { docker logs archiso-build; exit 1; }
 
-      - name: Check output
+      - name: Copy artifacts
         run: |
-          echo "=== Checking for ISO ==="
-          docker exec archbuild ls -la /root/novaos/build-system/out/ 2>/dev/null || echo "No output dir"
           mkdir -p output
-          docker cp archbuild:/root/novaos/build-system/out/. output/ 2>/dev/null || { echo "FAILED: No ISO found"; exit 1; }
-          ls -la output/
+          docker cp archiso-build:/build/build-system/out/. output/ 2>/dev/null || { echo "FAILED"; docker logs archiso-build; exit 1; }
+          ls -lh output/
 
       - name: Upload artifact
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: NovaOS-ISO
@@ -74,5 +79,5 @@ jobs:
       - name: Cleanup
         if: always()
         run: |
-          docker stop archbuild 2>/dev/null || true
-          docker rm archbuild 2>/dev/null || true
+          docker stop archiso-build 2>/dev/null || true
+          docker rm archiso-build 2>/dev/null || true
