@@ -22,57 +22,41 @@ jobs:
 
       - name: Run Arch container
         run: |
+          echo "=== Starting Docker ==="
+          docker version
           docker run -d --name archbuild --privileged archlinux:latest sleep infinity
-          docker exec archbuild mkdir -p /root/novaos
-          docker ps
+          docker ps -a
+          docker exec archbuild cat /etc/os-release
 
       - name: Build ISO
+        timeout-minutes: 60
         run: |
-          # Copy files to container
-          docker cp . archbuild:/root/novaos
+          echo "=== Copying files ==="
+          docker cp . archbuild:/root/novaos || exit 1
           
-          # Install archiso and build
+          echo "=== Installing packages ==="
           docker exec archbuild bash -c "
-            # Update pacman database first
-            pacman -Sy --noconfirm 2>&1 | tail -3 || true
-            pacman -Sy --noconfirm archiso git 2>&1 | tail -5
-            
-            # Configure pacman to use working mirror
-            cat > /etc/pacman.conf << 'PACMAN'
-[options]
-Architecture = auto
-SigLevel    = Never
-LocalFileSigLevel = Never
-
-[core]
-Server = https://mirror.rackspace.com/archlinux/\$repo/os/\$arch
-
-[extra]
-Server = https://mirror.rackspace.com/archlinux/\$repo/os/\$arch
-
-[community]
-Server = https://mirror.rackspace.com/archlinux/\$repo/os/\$arch
-PACMAN
-            
-            # Rebuild database
-            pacman -Sy 2>&1 | tail -5 || true
-            
+            set -e
+            pacman-key --init || true
+            pacman-key --populate archlinux || true
+            pacman -Sy --noconfirm archiso git
+          " || exit 1
+          
+          echo "=== Building ISO ==="
+          docker exec archbuild bash -c "
+            set -e
             cd /root/novaos
             chmod +x build-system/build.sh
-            ./build-system/build.sh --profile nova --clean 2>&1
-          "
+            ./build-system/build.sh --profile nova --clean
+          " || exit 1
 
-      - name: Copy artifacts
+      - name: Check output
         run: |
+          echo "=== Checking for ISO ==="
+          docker exec archbuild ls -la /root/novaos/build-system/out/ 2>/dev/null || echo "No output dir"
           mkdir -p output
-          docker cp archbuild:/root/novaos/build-system/out/. output/ 2>/dev/null || echo "No ISO"
+          docker cp archbuild:/root/novaos/build-system/out/. output/ 2>/dev/null || { echo "FAILED: No ISO found"; exit 1; }
           ls -la output/
-
-      - name: Cleanup
-        if: always()
-        run: |
-          docker stop archbuild 2>/dev/null || true
-          docker rm archbuild 2>/dev/null || true
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -80,4 +64,9 @@ PACMAN
           name: NovaOS-ISO
           path: output/
           retention-days: 14
-          if-no-files-found: warn
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker stop archbuild 2>/dev/null || true
+          docker rm archbuild 2>/dev/null || true
