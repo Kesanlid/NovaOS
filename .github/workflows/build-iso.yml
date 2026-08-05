@@ -11,148 +11,38 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    services:
+      archlinux:
+        image: archlinux:latest
+        options: --privileged
+        volumes:
+          - ${{ github.workspace }}:/workspace
+
     steps:
       - name: Checkout
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
+          path: /workspace/NovaOS
 
-      - name: Install dependencies
+      - name: Build ISO in Arch container
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            qemu-system-x86 \
-            qemu-utils \
-            genisoimage \
-            libarchive-tools \
-            squashfs-tools \
-            wget \
-            curl \
-            sudo \
-            arch-install-scripts \
-            dosfstools \
-            file
-
-      - name: Create build environment
-        run: |
-          sudo qemu-img create -f raw /tmp/archdisk.img 15G
-          LOOPDEV=$(sudo losetup -fP --show /tmp/archdisk.img)
-          echo "loop_dev=$LOOPDEV" >> $GITHUB_ENV
-          sudo parted -s $LOOPDEV mklabel msdos
-          sudo parted -s $LOOPDEV mkpart primary ext4 1MiB 100%
-          sudo parted -s $LOOPDEV set 1 boot on
-          sudo partprobe $LOOPDEV
-          sudo mkfs.ext4 -F "${LOOPDEV}p1"
-          sudo mkdir -p /mnt/archbuild
-          sudo mount "${LOOPDEV}p1" /mnt/archbuild
-
-      - name: Download Arch Linux Bootstrap
-        run: |
-          # Clean any previous download
-          rm -f /tmp/arch.tar.gz /tmp/archlinux-bootstrap-x86_64.tar.gz*
+          # Update and install archiso
+          pacman -Sy --noconfirm archiso
           
-          # Try multiple download methods
-          echo "Attempting download from multiple sources..."
+          # Build ISO
+          cd /workspace/NovaOS
+          chmod +x build-system/build.sh
+          ./build-system/build.sh --profile nova --clean 2>&1 | tee /tmp/build.log
           
-          # Method 1: Direct wget with different options
-          wget --no-check-certificate --timeout=60 --tries=3 \
-            "https://mirrors.kernel.org/archlinux/iso/latest/archlinux-bootstrap-x86_64.tar.gz" \
-            -O /tmp/arch.tar.gz 2>&1 || true
-          
-          # Check if download succeeded
-          if [ ! -s /tmp/arch.tar.gz ] || [ "$(du /tmp/arch.tar.gz | cut -f1)" -lt 50000 ]; then
-            echo "First attempt failed, trying alternative mirror..."
-            rm -f /tmp/arch.tar.gz
-            wget --no-check-certificate --timeout=60 --tries=3 \
-              "https://ftp.snt.utwente.nl/pub/os/linux/archlinux/iso/latest/archlinux-bootstrap-x86_64.tar.gz" \
-              -O /tmp/arch.tar.gz 2>&1 || true
-          fi
-          
-          # Check file size
-          if [ -s /tmp/arch.tar.gz ]; then
-            SIZE=$(stat -c%s /tmp/arch.tar.gz 2>/dev/null || echo "0")
-            echo "Downloaded file size: $SIZE bytes"
-            if [ "$SIZE" -lt 50000000 ]; then
-              echo "File too small, download may have failed"
-              rm -f /tmp/arch.tar.gz
-            fi
-          else
-            echo "No file downloaded"
-          fi
-          
-          ls -lh /tmp/arch.tar.gz 2>/dev/null || echo "Download failed"
-
-      - name: Extract Arch Linux
-        run: |
-          if [ ! -f /tmp/arch.tar.gz ] || [ ! -s /tmp/arch.tar.gz ]; then
-            echo "ERROR: No valid download found"
-            exit 1
-          fi
-          
-          # Extract
-          sudo tar xzf /tmp/arch.tar.gz -C /mnt/archbuild --strip-components=1
-          
-          # Configure pacman
-          sudo rm -f /mnt/archbuild/etc/pacman.d/mirrorlist
-          echo 'Server = https://mirrors.kernel.org/archlinux/$repo/os/$arch' | sudo tee /mnt/archbuild/etc/pacman.d/mirrorlist
-          ls -la /mnt/archbuild/
-
-      - name: Mount filesystems
-        run: |
-          sudo mount -t proc /proc /mnt/archbuild/proc || true
-          sudo mount -t sysfs /sys /mnt/archbuild/sys || true
-          sudo mount --bind /dev /mnt/archbuild/dev || true
-          sudo cp /etc/resolv.conf /mnt/archbuild/etc/resolv.conf
-
-      - name: Setup pacman keys
-        timeout-minutes: 10
-        run: |
-          sudo chroot /mnt/archbuild /bin/bash -c "
-            pacman-key --init 2>&1 || echo 'key init done'
-            pacman-key --populate archlinux 2>&1 || echo 'key populate done'
-          "
-
-      - name: Install base system
-        timeout-minutes: 30
-        run: |
-          sudo chroot /mnt/archbuild /bin/bash -c "
-            pacman -Sy --noconfirm base base-devel archiso linux linux-firmware 2>&1 | tail -30
-          "
-
-      - name: Copy project files
-        run: |
-          sudo mkdir -p /mnt/archbuild/root/novaos
-          sudo cp -r . /mnt/archbuild/root/novaos/
-          sudo chmod +x /mnt/archbuild/root/novaos/build-system/build.sh
-          sudo ls /mnt/archbuild/root/novaos/build-system/
-
-      - name: Build ISO
-        timeout-minutes: 60
-        run: |
-          sudo chroot /mnt/archbuild /bin/bash -c "
-            cd /root/novaos
-            ./build-system/build.sh --profile nova --clean 2>&1 | tee /tmp/build.log
-            echo 'EXIT_CODE:' \$?
-          "
-
-      - name: Debug
-        if: failure()
-        run: |
-          sudo cat /tmp/build.log 2>/dev/null || echo "No log"
-          sudo ls -la /mnt/archbuild/root/novaos/build-system/work/ 2>/dev/null || echo "No work dir"
+          echo "Exit code: $?"
 
       - name: Copy artifacts
         run: |
           mkdir -p output
-          sudo cp /mnt/archbuild/root/novaos/build-system/out/*.iso output/ 2>/dev/null || echo "No ISO"
+          cp /workspace/NovaOS/build-system/out/*.iso output/ 2>/dev/null || echo "No ISO"
+          cp /workspace/NovaOS/build-system/out/*.sha256 output/ 2>/dev/null || true
           ls -la output/
-
-      - name: Cleanup
-        if: always()
-        run: |
-          sudo umount /mnt/archbuild/proc /mnt/archbuild/sys /mnt/archbuild/dev 2>/dev/null || true
-          sudo umount /mnt/archbuild 2>/dev/null || true
-          sudo losetup -D 2>/dev/null || true
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
