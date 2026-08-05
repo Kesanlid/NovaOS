@@ -17,37 +17,22 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Docker
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y docker.io
-          sudo service docker start
-          sleep 3
-          docker ps
-
-      - name: Pull Arch Linux image
-        run: |
-          docker pull archlinux:latest
-          docker images | grep archlinux
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Run Arch container
-        id: container
         run: |
-          CONTAINER_ID=$(docker run -d --privileged archlinux:latest sleep infinity)
-          echo "container_id=$CONTAINER_ID" >> $GITHUB_OUTPUT
-          echo "Container started: $CONTAINER_ID"
+          docker run -d --name archbuild --privileged archlinux:latest sleep infinity
+          docker ps
 
       - name: Build ISO
         run: |
-          CONTAINER_ID=$(docker ps -q --filter "ancestor=archlinux:latest" | head -1)
-          echo "Using container: $CONTAINER_ID"
-          
-          # Copy files
-          docker cp . $CONTAINER_ID:/workspace/NovaOS
+          # Copy files to container
+          docker cp . archbuild:/workspace/NovaOS
           
           # Install archiso and build
-          docker exec $CONTAINER_ID bash -c "
-            pacman -Sy --noconfirm archiso git
+          docker exec archbuild bash -c "
+            pacman -Sy --noconfirm archiso git 2>&1 | tail -5
             cd /workspace/NovaOS
             chmod +x build-system/build.sh
             ./build-system/build.sh --profile nova --clean 2>&1
@@ -55,16 +40,15 @@ jobs:
 
       - name: Copy artifacts
         run: |
-          CONTAINER_ID=$(docker ps -q --filter "ancestor=archlinux:latest" | head -1)
           mkdir -p output
-          docker cp $CONTAINER_ID:/workspace/NovaOS/build-system/out/. output/ 2>/dev/null || echo "No ISO"
+          docker cp archbuild:/workspace/NovaOS/build-system/out/. output/ 2>/dev/null || echo "No ISO"
           ls -la output/
 
       - name: Cleanup
         if: always()
         run: |
-          docker stop $(docker ps -q --filter "ancestor=archlinux:latest") 2>/dev/null || true
-          docker rm $(docker ps -aq --filter "ancestor=archlinux:latest") 2>/dev/null || true
+          docker stop archbuild 2>/dev/null || true
+          docker rm archbuild 2>/dev/null || true
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
