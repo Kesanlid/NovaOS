@@ -27,9 +27,11 @@ jobs:
             libarchive-tools \
             squashfs-tools \
             wget \
+            curl \
             sudo \
             arch-install-scripts \
-            dosfstools
+            dosfstools \
+            file
 
       - name: Create build environment
         run: |
@@ -44,26 +46,25 @@ jobs:
           sudo mkdir -p /mnt/archbuild
           sudo mount "${LOOPDEV}p1" /mnt/archbuild
 
-      - name: Download and extract Arch Linux
+      - name: Download Arch Linux Bootstrap
         run: |
-          # Try multiple mirrors with fallbacks
-          for mirror in \
-            "https://mirror.us.leaseweb.net/archlinux/iso/latest/" \
-            "https://mirror.rackspace.com/archlinux/iso/latest/" \
-            "https://mirror.csclub.uwaterloo.ca/archlinux/iso/latest/" \
-            "https://mirrors.kernel.org/archlinux/iso/latest/" \
-            "https://ftp.lrz.de/linux/mirrors/archlinux/iso/latest/" \
-            "https://archlinux.thaller.ws/iso/latest/"; do
-            echo "Trying: $mirror"
-            if wget -q "${mirror}archlinux-bootstrap-x86_64.tar.gz" -O /tmp/arch.tar.gz 2>/dev/null; then
-              echo "Downloaded from: $mirror"
-              break
-            fi
-          done
+          # Download from official Arch Linux mirrors
+          curl -L -o /tmp/arch.tar.gz \
+            "https://geo.mirror.pacman.org/archlinux/iso/latest/archlinux-bootstrap-x86_64.tar.gz" \
+            --connect-timeout 30 \
+            --max-time 600 \
+            -# || exit 1
           
           ls -lh /tmp/arch.tar.gz
+          file /tmp/arch.tar.gz
+          # Verify it's a valid tarball
+          tar -tzf /tmp/arch.tar.gz | head -5
+
+      - name: Extract Arch Linux
+        run: |
           sudo tar xzf /tmp/arch.tar.gz -C /mnt/archbuild --strip-components=1
-          echo 'Server = https://mirror.us.leaseweb.net/archlinux/$repo/os/$arch' | sudo tee /mnt/archbuild/etc/pacman.d/mirrorlist
+          echo 'Server = https://geo.mirror.pacman.org/archlinux/$repo/os/$arch' | sudo tee /mnt/archbuild/etc/pacman.d/mirrorlist
+          ls -la /mnt/archbuild/
 
       - name: Mount filesystems
         run: |
