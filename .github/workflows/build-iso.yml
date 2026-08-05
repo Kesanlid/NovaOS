@@ -37,21 +37,20 @@ jobs:
           echo "=== Installing packages ==="
           docker exec archbuild bash -c "
             set -e
+            # Clean pacman cache and databases
+            rm -rf /var/lib/pacman/sync/*
+            rm -rf /var/cache/pacman/pkg/*
+            
+            # Setup fresh pacman
             pacman-key --init || true
             pacman-key --populate archlinux || true
-            # Clean and update pacman databases
-            rm -rf /var/lib/pacman/sync/*
-            pacman -Sy --noconfirm || true
+            pacman -Sy --noconfirm
             pacman -Sy --noconfirm archiso git
           " || exit 1
           
           echo "=== Building ISO ==="
           docker exec archbuild bash -c "
             set -e
-            # Clean previous builds
-            rm -rf /root/novaos/build-system/work /root/novaos/build-system/out
-            mkdir -p /root/novaos/build-system/work /root/novaos/build-system/out
-            
             cd /root/novaos
             chmod +x build-system/build.sh
             ./build-system/build.sh --profile nova
