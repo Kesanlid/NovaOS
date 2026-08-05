@@ -39,7 +39,8 @@ jobs:
             set -e
             pacman-key --init || true
             pacman-key --populate archlinux || true
-            # Update pacman databases
+            # Clean and update pacman databases
+            rm -rf /var/lib/pacman/sync/*
             pacman -Sy --noconfirm || true
             pacman -Sy --noconfirm archiso git
           " || exit 1

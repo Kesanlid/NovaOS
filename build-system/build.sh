@@ -243,6 +243,7 @@ collect_packages() {
 Architecture = auto
 SigLevel = Never
 LocalFileSigLevel = Never
+CheckSpace
 
 [core]
 Server = https://geo.mirror.pacman.org/archlinux/$repo/os/$arch
@@ -254,6 +255,10 @@ Server = https://geo.mirror.pacman.org/archlinux/$repo/os/$arch
 Server = https://geo.mirror.pacman.org/archlinux/$repo/os/$arch
 PACMAN_EOF
     success "Created pacman.conf for archiso."
+    
+    # Also sync pacman databases before build
+    info "Syncing pacman databases..."
+    pacman -Sy --noconfirm || true
 }
 
 # Build the ISO
