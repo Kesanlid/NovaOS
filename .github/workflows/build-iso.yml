@@ -11,38 +11,60 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    services:
-      archlinux:
-        image: archlinux:latest
-        options: --privileged
-        volumes:
-          - ${{ github.workspace }}:/workspace
-
     steps:
       - name: Checkout
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
-          path: /workspace/NovaOS
 
-      - name: Build ISO in Arch container
+      - name: Setup Docker
         run: |
-          # Update and install archiso
-          pacman -Sy --noconfirm archiso
+          sudo apt-get update
+          sudo apt-get install -y docker.io
+          sudo service docker start
+          sleep 3
+          docker ps
+
+      - name: Pull Arch Linux image
+        run: |
+          docker pull archlinux:latest
+          docker images | grep archlinux
+
+      - name: Run Arch container
+        id: container
+        run: |
+          CONTAINER_ID=$(docker run -d --privileged archlinux:latest sleep infinity)
+          echo "container_id=$CONTAINER_ID" >> $GITHUB_OUTPUT
+          echo "Container started: $CONTAINER_ID"
+
+      - name: Build ISO
+        run: |
+          CONTAINER_ID=$(docker ps -q --filter "ancestor=archlinux:latest" | head -1)
+          echo "Using container: $CONTAINER_ID"
           
-          # Build ISO
-          cd /workspace/NovaOS
-          chmod +x build-system/build.sh
-          ./build-system/build.sh --profile nova --clean 2>&1 | tee /tmp/build.log
+          # Copy files
+          docker cp . $CONTAINER_ID:/workspace/NovaOS
           
-          echo "Exit code: $?"
+          # Install archiso and build
+          docker exec $CONTAINER_ID bash -c "
+            pacman -Sy --noconfirm archiso git
+            cd /workspace/NovaOS
+            chmod +x build-system/build.sh
+            ./build-system/build.sh --profile nova --clean 2>&1
+          "
 
       - name: Copy artifacts
         run: |
+          CONTAINER_ID=$(docker ps -q --filter "ancestor=archlinux:latest" | head -1)
           mkdir -p output
-          cp /workspace/NovaOS/build-system/out/*.iso output/ 2>/dev/null || echo "No ISO"
-          cp /workspace/NovaOS/build-system/out/*.sha256 output/ 2>/dev/null || true
+          docker cp $CONTAINER_ID:/workspace/NovaOS/build-system/out/. output/ 2>/dev/null || echo "No ISO"
           ls -la output/
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker stop $(docker ps -q --filter "ancestor=archlinux:latest") 2>/dev/null || true
+          docker rm $(docker ps -aq --filter "ancestor=archlinux:latest") 2>/dev/null || true
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
