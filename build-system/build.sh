@@ -244,6 +244,7 @@ Architecture = auto
 SigLevel = Never
 LocalFileSigLevel = Never
 CheckSpace
+OverwriteDirs
 
 [core]
 Server = https://geo.mirror.pacman.org/archlinux/$repo/os/$arch
