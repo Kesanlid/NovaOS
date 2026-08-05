@@ -241,19 +241,17 @@ collect_packages() {
     cat > "$pacman_conf" << 'PACMAN_EOF'
 [options]
 Architecture = auto
-CacheDir = /var/cache/pacman/pkg/
-CacheDir = /var/cache/pacman/pkg/
 SigLevel = Never
 LocalFileSigLevel = Never
 
 [core]
-Include = /etc/pacman.d/mirrorlist
+Server = https://mirror.rackspace.com/archlinux/$repo/os/$arch
 
 [extra]
-Include = /etc/pacman.d/mirrorlist
+Server = https://mirror.rackspace.com/archlinux/$repo/os/$arch
 
 [community]
-Include = /etc/pacman.d/mirrorlist
+Server = https://mirror.rackspace.com/archlinux/$repo/os/$arch
 PACMAN_EOF
     success "Created pacman.conf for archiso."
 }

@@ -33,7 +33,30 @@ jobs:
           
           # Install archiso and build
           docker exec archbuild bash -c "
+            # Update pacman database first
+            pacman -Sy --noconfirm 2>&1 | tail -3 || true
             pacman -Sy --noconfirm archiso git 2>&1 | tail -5
+            
+            # Configure pacman to use working mirror
+            cat > /etc/pacman.conf << 'PACMAN'
+[options]
+Architecture = auto
+SigLevel    = Never
+LocalFileSigLevel = Never
+
+[core]
+Server = https://mirror.rackspace.com/archlinux/\$repo/os/\$arch
+
+[extra]
+Server = https://mirror.rackspace.com/archlinux/\$repo/os/\$arch
+
+[community]
+Server = https://mirror.rackspace.com/archlinux/\$repo/os/\$arch
+PACMAN
+            
+            # Rebuild database
+            pacman -Sy 2>&1 | tail -5 || true
+            
             cd /root/novaos
             chmod +x build-system/build.sh
             ./build-system/build.sh --profile nova --clean 2>&1
